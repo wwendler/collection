@@ -1,4 +1,4 @@
-# a connect four server (ish) will import and call the players
+# a connect four "server" will import and call the players
 
 import sys
 
@@ -26,7 +26,11 @@ def printBoard(board):
         print
 
 def makeMove(move, player, board):
-    board[move[1]][move[0]] = player
+    y = findMinRow(move, board)
+    board[y][move] = player
+
+def setLoc(x, y, player, board):
+    board[y][x] = player
 
 # this method not used...
 def findWinnerBad(board):
@@ -59,6 +63,9 @@ def findWinnerBad(board):
     # check forward diagonals
     for diag in range(len(board)*2 - 1):
     	pass
+
+def moveIsValid(x, board):
+    return isValid(x, findMinRow(x, board), board)
 
 def isValid(x, y, board):
     return (x >= 0 and y >= 0 and y < len(board) and x < len(board[0]))
@@ -120,13 +127,12 @@ def main():
             move = player_one.move(player, board)
         else:
             move = player_two.move(player, board)
-        loc = (move, findMinRow(move, board))
-        if not isValid(loc[0], loc[1], board):
+        if not moveIsValid(move, board):
             print "player %d forfeits" % player
             winner = player%2 + 1
         else:
-            print "player %d moves to %s" % (player, str(loc))
-            makeMove(loc, player, board)
+            print "player %d moves to %i" % (player, move)
+            makeMove(move, player, board)
             winner = findWinner(board)
         turn += 1
     printBoard(board)
