@@ -12,7 +12,9 @@ def makeBoard(x, y):
 
 def printBoard(cols, board):
     for n in range(len(board)):
-    	point = board[n]
+    	x = n%cols
+    	y = len(board)/cols - n/cols - 1
+    	point = board[y*cols + x]
         if point == 0:
             char = '_'
         elif point == 1:
@@ -26,14 +28,14 @@ def printBoard(cols, board):
             print
 
 def makeMove(move, player, cols, board):
-    y = findMinRow(move, board)
+    y = findMinRow(move, cols, board)
     board[y* cols + move] = player
 
 def setLoc(x, y, player, cols, board):
     board[y*cols + x] = player
 
 def moveIsValid(x, cols, board):
-    return isValid(x, findMinRow(x, board), board)
+    return isValid(x, findMinRow(x, cols, board), cols, board)
 
 def isValid(x, y, cols, board):
     return (x >= 0 and y >= 0 and y*cols < len(board) and x < cols)
@@ -84,6 +86,7 @@ def main():
     player_one = __import__(player_one_name)
     player_two = __import__(player_two_name)
     board = makeBoard(xsize, ysize)
+    #print str(board)
     winner = 0
     turn = 0
     while winner == 0:
