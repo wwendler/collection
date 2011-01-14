@@ -1,3 +1,5 @@
+// based on code found here: http://gpwiki.org/index.php/SDL:Tutorials:Using_SDL_with_OpenGL
+// Willis Wendler
 #include "SDL.h"
 #include "SDL_opengl.h"
 
@@ -68,7 +70,7 @@ void drawSquare(float x, float y, float s, GLuint texture)
 int main()
 {
     // initialize sdl
-    int init_flags = SDL_INIT_VIDEO;
+    int init_flags = SDL_INIT_VIDEO | SDL_INIT_TIMER;
     int sdl_flags = SDL_OPENGL;// | SDL_FULLSCREEN;
     if (SDL_Init(init_flags) != 0)
     {
@@ -95,10 +97,26 @@ int main()
     drawSquare(10, 10, 200, texture);
     SDL_GL_SwapBuffers();
     SDL_Event event;
-    while(1)
+    char * keyname;
+    while(true)
     {
-        SDL_PollEvent(&event);
-        if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_UP)
-            break;
+        while(SDL_PollEvent(&event));
+        {
+            switch(event.type)
+            {
+                case SDL_KEYDOWN:
+                    keyname = SDL_GetKeyName(event.key.keysym.sym);
+                    if (keyname[0] == 'q')
+                        exit(0);
+                    printf("key %s pressed.\n", keyname);
+                    break;
+                case SDL_KEYUP:
+                    keyname = SDL_GetKeyName(event.key.keysym.sym);
+                    printf("key %s released.\n", keyname);
+                    break;
+            }
+        }
+        SDL_Delay(100);
     }
+    SDL_Quit();
 }
