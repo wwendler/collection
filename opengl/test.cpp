@@ -1,7 +1,10 @@
 // based on code found here: http://gpwiki.org/index.php/SDL:Tutorials:Using_SDL_with_OpenGL
 // Willis Wendler
+
 #include "SDL.h"
 #include "SDL_opengl.h"
+#include <stdlib.h>
+#include <math.h>
 
 GLuint genTexture(SDL_Surface *surface)
 {
@@ -40,30 +43,36 @@ GLuint genTexture(SDL_Surface *surface)
     }
 
     // create texture
+    printf("gl create texture\n");
     glGenTextures(1, &texture);
     // bind texture??
+    printf("gl bind texture\n");
     glBindTexture(GL_TEXTURE_2D, texture);
     // set scaling properties
+    printf("gl param texture\n");
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // give texture data from sdl surface
+    printf("gl tex image\n");
     glTexImage2D(GL_TEXTURE_2D, 0, nOfColors, surface->w, surface->h, 0,
             texture_format, GL_UNSIGNED_BYTE, surface->pixels);
     return texture;
 }
 
-void drawSquare(float x, float y, float s, GLuint texture)
+void drawPoly(int n_side, float x, float y, float r, GLuint texture)
 {
+    int n;
+    float xx, yy, theta;
     glBindTexture(GL_TEXTURE_2D, texture);
-    glBegin(GL_QUADS);
-    glTexCoord2i( 0, 0 );
-    glVertex3f( 100.f, 100.f, 0.0f );
-    glTexCoord2i( 1, 0 );
-    glVertex3f( 228.f, 100.f, 0.f );
-    glTexCoord2i( 1, 1 );
-    glVertex3f( 228.f, 228.f, 0.f );
-    glTexCoord2i( 0, 1 );
-    glVertex3f( 100.f, 228.f, 0.f );
+    glBegin(GL_POLYGON);
+    for (n = 0; n < n_side; n++)
+    {
+        theta = n*2.0*M_PI/n_side;
+        xx = x + r*cos(theta);
+        yy = y + r*sin(theta);
+        glTexCoord2f(cos(theta), sin(theta));
+        glVertex2f(xx, yy);
+    }
     glEnd();
 }
 
@@ -77,6 +86,8 @@ int main()
         fprintf(stderr, "Error initializing SDL: %s\n", SDL_GetError());
         return 1;
     }
+    atexit(SDL_Quit);
+    SDL_EnableKeyRepeat(0, 0);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_Surface *screen = SDL_SetVideoMode(640, 480, 16, sdl_flags);
 
@@ -92,31 +103,47 @@ int main()
     glLoadIdentity();
 
     // load images
-    SDL_Surface *img = SDL_LoadBMP("texture.bmp");
+    printf("loading images\n");
+    SDL_Surface *img = SDL_LoadBMP("trollface.bmp");
+    if (img == NULL)
+    {
+        printf("image load fail :(\n");
+        exit(1);
+    }
+    printf("creating textures\n");
     GLuint texture = genTexture(img);
-    drawSquare(10, 10, 200, texture);
+    //drawSquare(10, 10, 200, texture);
+    printf("drawing images\n");
+    drawPoly(7, 200.0, 200.0, 100.0, texture);
     SDL_GL_SwapBuffers();
     SDL_Event event;
     char * keyname;
     while(true)
     {
-        while(SDL_PollEvent(&event));
+        //printf("starting event loop...\n");
+        while(SDL_PollEvent(&event) == 1)
         {
             switch(event.type)
             {
                 case SDL_KEYDOWN:
                     keyname = SDL_GetKeyName(event.key.keysym.sym);
-                    if (keyname[0] == 'q')
+                    if (event.key.keysym.sym == SDLK_q)
                         exit(0);
-                    printf("key %s pressed.\n", keyname);
+                    printf("key %s pressed.\n",
+                            keyname);
                     break;
                 case SDL_KEYUP:
                     keyname = SDL_GetKeyName(event.key.keysym.sym);
                     printf("key %s released.\n", keyname);
                     break;
+                case SDL_MOUSEMOTION:
+                    printf("lololol\n");
+                    break;
+                default:
+                    printf("other event\n");
             }
         }
-        SDL_Delay(100);
+        SDL_Delay(200);
+        SDL_GL_SwapBuffers();
     }
-    SDL_Quit();
 }
