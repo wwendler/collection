@@ -1,10 +1,11 @@
 // based on code found here: http://gpwiki.org/index.php/SDL:Tutorials:Using_SDL_with_OpenGL
 // Willis Wendler
 
-#include "SDL.h"
-#include "SDL_opengl.h"
 #include <stdlib.h>
 #include <math.h>
+#include "SDL.h"
+#include "SDL_opengl.h"
+#include "SDL_image.h"
 
 GLuint genTexture(SDL_Surface *surface)
 {
@@ -59,24 +60,27 @@ GLuint genTexture(SDL_Surface *surface)
     return texture;
 }
 
-void drawPoly(int n_side, float x, float y, float r, GLuint texture)
+void drawPoly(int n_side, float x, float y, float r, float offset,
+        GLuint texture)
 {
     int n;
     float xx, yy, theta;
+    float poly_off = 100*offset;
     glBindTexture(GL_TEXTURE_2D, texture);
     glBegin(GL_POLYGON);
     for (n = 0; n < n_side; n++)
     {
         theta = n*2.0*M_PI/n_side;
-        xx = x + r*cos(theta);
-        yy = y + r*sin(theta);
-        glTexCoord2f(cos(theta), sin(theta));
+        xx = x + r*cos(theta + poly_off);
+        yy = y + r*sin(theta + poly_off);
+        glTexCoord2f(cos(theta+offset+poly_off)/2.0+.5,
+                sin(theta+offset+poly_off)/2.0+.5);
         glVertex2f(xx, yy);
     }
     glEnd();
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     // initialize sdl
     int init_flags = SDL_INIT_VIDEO | SDL_INIT_TIMER;
@@ -94,30 +98,38 @@ int main()
     // initialize opengl
     glEnable(GL_TEXTURE_2D);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    //glViewport(0, 0, 640, 480);
     glViewport(0, 0, 640, 480);
     glClear(GL_COLOR_BUFFER_BIT);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0.0f, 640, 480, 0.0f, -1.0f, 1.0f);
+    glOrtho(0.0f, 1.0f, 1.0f, 0.0f, -1.0f, 1.0f);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
     // load images
     printf("loading images\n");
-    SDL_Surface *img = SDL_LoadBMP("trollface.bmp");
+    char * img_file;
+    if (argc == 2)
+        img_file = argv[1];
+    else
+        img_file = "texture.bmp";
+    printf("loading image: %s\n", img_file);
+    SDL_Surface *img = IMG_Load(img_file);
     if (img == NULL)
     {
-        printf("image load fail :(\n");
+        fprintf(stderr, "image loading fail: %s\n", SDL_GetError());
         exit(1);
     }
     printf("creating textures\n");
     GLuint texture = genTexture(img);
     //drawSquare(10, 10, 200, texture);
     printf("drawing images\n");
-    drawPoly(7, 200.0, 200.0, 100.0, texture);
+    drawPoly(5, 200.0, 200.0, 100.0, 0.0, texture);
     SDL_GL_SwapBuffers();
     SDL_Event event;
     char * keyname;
+    int i = 0;
     while(true)
     {
         //printf("starting event loop...\n");
@@ -143,7 +155,10 @@ int main()
                     printf("other event\n");
             }
         }
-        SDL_Delay(200);
+        SDL_Delay(100);
+        glClear(GL_COLOR_BUFFER_BIT);
+        drawPoly(5 + (i%5), .5, .5, .5, .02*i, texture);
         SDL_GL_SwapBuffers();
+        i++;
     }
 }
