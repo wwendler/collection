@@ -25,6 +25,7 @@ GLuint genTexture(SDL_Surface *surface)
     nOfColors = surface->format->BytesPerPixel;
     if (nOfColors == 4)     // contains an alpha channel
     {
+        printf("this image is transparent...\n");
         if (surface->format->Rmask == 0x000000ff)
             texture_format = GL_RGBA;
         else
@@ -32,6 +33,7 @@ GLuint genTexture(SDL_Surface *surface)
     }
     else if (nOfColors == 3)     // no alpha channel
     {
+        printf("this is a normal image...\n");
         if (surface->format->Rmask == 0x000000ff)
             texture_format = GL_RGB;
         else
@@ -98,7 +100,8 @@ int main(int argc, char *argv[])
     // initialize opengl
     glEnable(GL_TEXTURE_2D);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    //glViewport(0, 0, 640, 480);
+    glEnable (GL_BLEND);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glViewport(0, 0, 640, 480);
     glClear(GL_COLOR_BUFFER_BIT);
     glMatrixMode(GL_PROJECTION);
@@ -113,7 +116,7 @@ int main(int argc, char *argv[])
     if (argc == 2)
         img_file = argv[1];
     else
-        img_file = "texture.bmp";
+        img_file = "texture.png";
     printf("loading image: %s\n", img_file);
     SDL_Surface *img = IMG_Load(img_file);
     if (img == NULL)
