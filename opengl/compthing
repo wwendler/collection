@@ -1,0 +1,3 @@
+#!/bin/sh
+g++ thing.cpp car.cpp -o Thing $(sdl-config --cflags --libs) -lGL -lGLU -lm -lSDL_image
+
