@@ -41,6 +41,7 @@ Vector::Vector()
 
 void Car::move(double t)
 {
+    turn(wheel_dir*t);
     velocity = velocity + acceleration*t;
     double mag = velocity.magnitude();
     if (mag > max_speed)
@@ -51,14 +52,21 @@ void Car::move(double t)
 void Car::turn(double theta)
 {
     direction += theta;
-    acceleration.x = cos(direction);
-    acceleration.y = sin(direction);
+    acceleration.x = acc_factor*cos(direction);
+    acceleration.y = acc_factor*sin(direction);
+}
+
+void Car::wheel(double dir)
+{
+    wheel_dir = dir;
 }
 
 Car::Car()
 {
-    max_speed = 10.0;
+    max_speed = 15.0;
     direction = 0.0;
+    wheel_dir = 0.0;
+    acc_factor = 5.0;
     turn(0.0);
 }
 

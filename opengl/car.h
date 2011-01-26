@@ -25,8 +25,11 @@ class Car
         Vector acceleration;
         double direction;
         double max_speed;
+        double wheel_dir;
+        double acc_factor;
         void move(double);
         void turn(double);
+        void wheel(double);
         Car();
 };
 

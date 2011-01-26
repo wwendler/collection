@@ -119,13 +119,20 @@ void drawScene(Car &a, GLuint cartex, GLuint bgtex)
     x = a.location.x/100.0;
     y = a.location.y/100.0;
     glPushMatrix();
+    glTranslatef(.5, .5, .0);
+    glTranslatef(-x, -y, .0);
+    drawRect(-.05, -.05, .05, .05, bgtex);
+    glPopMatrix();
+    glPushMatrix();
     glTranslatef(.5, .5, 0);
     glRotatef(a.direction/M_PI*180.0, 0.0, 0.0, 1.0);
-    glTranslatef(-.5, -.5, 0);
-    drawRect(.45, .45, .55, .55, cartex);
-    glTranslatef(x, y, 0);
-    drawRect(.45, .45, .55, .55, bgtex);
+    drawRect(.05, -.05, -.05, .05, cartex);
     glPopMatrix();
+    //draw bg;
+    //translate -x, -y;
+    //draw car;
+    //rotate;
+    //translate .5 .5
 }
 
 int main(int argc, char *argv[])
@@ -172,10 +179,10 @@ int main(int argc, char *argv[])
     while(true)
     {
         glClear(GL_COLOR_BUFFER_BIT);
-        printf("%lf, %lf, %lf\n", a.location.x, a.location.y, a.direction);
+        //printf("%lf, %lf, %lf\n", a.location.x, a.location.y, a.direction);
         drawScene(a, car, bg);
         SDL_GL_SwapBuffers();
-        SDL_Delay(100);
+        SDL_Delay(50);
         while(SDL_PollEvent(&event) == 1)
         {
             switch(event.type)
@@ -187,21 +194,36 @@ int main(int argc, char *argv[])
                             exit(0);
                             break;
                         case SDLK_a:
-                            a.turn(.2);
+                            a.wheel(-1.5);
                             break;
                         case SDLK_d:
-                            a.turn(-.2);
+                            a.wheel(1.5);
                             break;
                         default:
                             keyname = SDL_GetKeyName(event.key.keysym.sym);
                             printf("key pressed: %s\n", keyname);
                     }
                     break;
+                case SDL_KEYUP:
+                    switch(event.key.keysym.sym)
+                    {
+                        case SDLK_a:
+                            a.wheel(0.0);
+                            break;
+                        case SDLK_d:
+                            a.wheel(0.0);
+                            break;
+                        default:
+                            keyname = SDL_GetKeyName(event.key.keysym.sym);
+                            printf("key released: %s\n", keyname);
+                    }
+                    break;
                 default:
                     printf("other event\n");
             }
         }
-        a.move(.1);
+        for (int n = 0; n < 10; n++)
+            a.move(.005);
         i++;
     }
 }
