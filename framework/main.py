@@ -1,5 +1,6 @@
 # framework goes here?
 # we really shouldn't be udp focused...?
+# april 03 2011
 
 import sys
 
@@ -7,14 +8,47 @@ import sys
 from twisted.internet import defer
 from twisted.internet.protocol import Protocol, Factory, ClientFactory
 from twisted.protocols.basic import NetstringReceiver
+from twisted.python import log
+
+from twisted.internet import reactor, threads, task
+
+class InputGetter(object):
+    def __init__():
+        self.safe = True
+    def getInput():
+        line = raw_input("what you say? ")
+        return line
 
 class GameProtocol(NetstringReceiver):
+    def mySendString(self, line):
+        print "sending message: %s" % line
+        self.sendString(line)
     def stringReceived(self, line):
         if line == "quit":
             print "received disconnect request?"
             self.transport.loseConnection()
+            return
+        if line == "y hello thar":
+            print "server is ready!"
+            self.startInputLoop()
+            #d = self.factory.getLine()
+            #d = threads.deferToThread(getInput)
+            #d.addCallback(self.mySendString)
+            #d.addErrback(log.err)
+            #d.addCallback(self.factory.getLine)
         else:
             print "message received: %s" % line
+    def connectionMade(self):
+        print "protocol has a connection"
+    def connectionLost(self, reason):
+        print "protocol lost a connection"
+        print "reason: %s" % reason.getErrorMessage()
+        reason.printTraceback()
+    def startInputLoop(self, _=None):
+        d = threads.deferToThread(getInput)
+        d.addCallback(self.mySendString)
+        d.addErrback(log.err)
+        d.addCallback(self.startInputLoop)
 
 class GameFactory(ClientFactory):
     protocol = GameProtocol
@@ -23,35 +57,56 @@ class GameFactory(ClientFactory):
     def startFactory(self):
         print "starting client factory"
     def stopFactory(self):
-        print "halting client factory"
-    def startedConnecting(self):
+        print "halting client factory, and quitting"
+        #from twisted.internet import reactor
+        reactor.stop()
+    def startedConnecting(self, connector):
         print "connecting..."
-    def clientConnectionFailed(self):
-        print "failed to connect!"
-    def clientConnectionLost(self):
-        print "lost a connection"
+    # reason is a twisted.python.failure object
+    def clientConnectionFailed(self, connector, reason):
+        print "factory failed to connect!"
+        print "reason: %s" % reason.getErrorMessage()
+        #print "traceback: %s" % reason.getTraceback()
+        reason.printTraceback()
+    def clientConnectionLost(self, connector, reason):
+        print "factory lost a connection"
+        print "reason: %s" % reason.getErrorMessage()
+        reason.printTraceback()
+    def getLine(self, _):
+        d = threads.deferToThread(getInput)
+        return d
 
 class Game(object):
     def __init__(self):
         self.factory = GameFactory()
         print "game initialized"
     def connect(self, host, port):
-        from twisted.internet import reactor
+        #from twisted.internet import reactor
         reactor.connectTCP(host, port, self.factory)
-        reactor.run()
 
 class GameServerProtocol(NetstringReceiver):
+    def mySendString(self, line):
+        print "sending message: %s" % line
+        self.sendString(line)
     def stringReceived(self, line):
         print "message received: %s" % line
         self.num_lines_received += 1
         if (self.num_lines_received > 5):
-            self.sendString("quit")
+            self.mySendString("quit")
+        else:
+            self.mySendString(line + "~")
     def connectionMade(self):
-        print "connection made."
+        print "protocol connection made."
         self.num_lines_received = 0
-        self.sendString("y hello thar\n")
-    def connectionLost(self):
-        print "connection lost."
+        self.mySendString("y hello thar")
+        # this server is very annoyng...
+        self.loop = task.LoopingCall(self.mySendString, ("bluh"))
+        self.loop.start(10.0, now=False)
+    def connectionLost(self, reason):
+        self.loop.stop()
+        print "protocol connection lost."
+        print "reason: %s" % reason.getErrorMessage()
+        reason.printTraceback()
 
 class GameServerFactory(Factory):
     protocol = GameServerProtocol
@@ -67,9 +122,7 @@ class GameServer(object):
         self.factory = GameServerFactory()
         print "game server initialized"
     def listen(self, port):
-        from twisted.internet import reactor
         reactor.listenTCP(port, self.factory)
-        reactor.run()
 
 def main():
     print "starting up..."
@@ -80,18 +133,18 @@ def main():
         return
     if sys.argv[1] == 'server':
         print "i am a server"
-        server = Server()
+        server = GameServer()
         port = int(sys.argv[2])
-        protocol = ServerProtocol()
         print "starting server on port %i" % port
         server.listen(port)
     else:
         print "i am a client"
         game = Game()
         ip = sys.argv[1]
-        port = int(sys.artv[2])
+        port = int(sys.argv[2])
         print "connecting to %s port %i" % (ip, port)
         game.connect(ip, port)
+    reactor.run()
 
 if __name__ == "__main__":
     main()
