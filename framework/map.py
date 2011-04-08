@@ -1,5 +1,5 @@
 # map framework goes here
-# april 03 2011
+# april 08 2011
 
 import pygame.image
 
@@ -53,6 +53,16 @@ class GameMap(object):
         self.map[(0, 0)] = 'default'
         self.map[(1, 1)] = 'default'
         self.map[(1, 0)] = 'default'
+        self.size = 64
+        self.center = (0, 0)
         print "game map initialized"
-    def draw(self, 
+    # x and y are the center of the surface that will be drawn onto
+    # we need to check that we are only draing inside the area of the
+    # surface, although perhaps pygame handles that well?
+    def draw(self, surface, (x, y)):
+        for loc in map:
+            surface.blit(self.types.getSprite(self.map[loc]),
+                         (x + (loc[0] - self.center[0])*self.size,
+                          y + (loc[1] - self.center[1])*self.size))
+
 
