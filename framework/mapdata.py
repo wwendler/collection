@@ -29,9 +29,9 @@ class TileTypes(object):
     def isTile(self, name):
         return name in self.tile
     def isPassable(self, name):
-        return self.tile[name].is_wall
+        return self.tiles[name].is_wall
     def getSprite(self, name):
-        return self.tile[name].sprite
+        return self.tiles[name].sprite
 
 # old sprites, methods to load them go here
 class SpriteList(object):
@@ -50,19 +50,32 @@ class GameMap(object):
         self.sprites.loadSprite('none', 'img/def.png')
         self.types.newTile('default', ('silly'), 'none')
         self.map = {}
-        self.map[(0, 0)] = 'default'
-        self.map[(1, 1)] = 'default'
-        self.map[(1, 0)] = 'default'
         self.size = 64
         self.center = (0, 0)
         print "game map initialized"
+    def dumbMap(self):
+        self.map[(0, 0)] = 'default'
+        self.map[(1, 1)] = 'default'
+        self.map[(1, 0)] = 'default'
+        print "dumb map created"
     # x and y are the center of the surface that will be drawn onto
     # we need to check that we are only draing inside the area of the
     # surface, although perhaps pygame handles that well?
     def draw(self, surface, (x, y)):
-        for loc in map:
-            surface.blit(self.types.getSprite(self.map[loc]),
-                         (x + (loc[0] - self.center[0])*self.size,
-                          y + (loc[1] - self.center[1])*self.size))
-
+        for loc in self.map:
+            sprite_name = self.types.getSprite(self.map[loc])
+            xpos = x + (loc[0] - self.center[0])*self.size
+            ypos = y + (loc[1] - self.center[1])*self.size
+            surface.blit(self.sprites.getSprite(sprite_name),
+                         (xpos, ypos))
+    # return map data in easily sendable chunks
+    def getMap(self):
+        lines = []
+        for x in self.map:
+            line = "TILE %i %i %s" % (x[0], x[1], self.map[x])
+            lines.append(line)
+        return lines
+    def addTile(self, loc, name):
+        print 'added tile!'
+        self.map[loc] = name
 
