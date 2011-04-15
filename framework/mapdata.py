@@ -7,9 +7,9 @@ import pygame.image
 class Tile(object):
     def __init__(self, name, attributes, sprite):
         self.name = str(name)
-        attr = {}
+        self.attr = {}
         for x in attributes:
-            attr[str(x)] = True
+            self.attr[str(x)] = True
         if 'passable' in attr:
             self.is_wall = False
         else:
